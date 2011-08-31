@@ -1,0 +1,57 @@
+This class can used to generate license style keys to control the distribution
+and functionality of PHP applications.
+
+It generates license strings that can bind PHP applications to specific domains,
+specific servers, can only be executed during limited time period, or to
+restrictions placed on a home server within the license key.
+
+The binding to server process attempts to use the server network card MAC
+address. This feature was tested on servers are Mac OS X (Darwin), Linux,
+Windows XP, although it may also work for FreeBSD, NetBSD, Solaris.
+
+PADL also attempts to use information from $_SERVER variable to encode that
+server name, server IP, server application path and server application url to
+the license key. Part of the process also binds the IP Address from the $_SERVER
+variable if found, but it also attempts to parse the server config file (the
+same used to get the MAC address) for any more IPs.
+
+The server binding can be disabled if required, and it also possible to block
+the key being generated for the localhost address (127.0.0.1).
+
+The time limiting of the license uses a start period (and a given start offset
+to allow for time discrepancies) and an expiry date if required.
+
+If required when validating a key it is also possible to dial home to check the
+license key on your own PADL License Server, examples are given.
+
+The PHP_OS and PHP_VERSION of the php that the key was generated for is also
+encrypted into the key.
+
+It is also possible to encrypt additional information into the license key to
+enable you to place restrictive features in your application to allow the
+creation of trialware or demoware.
+
+This class is still in development however it is stable. A GUI is to follow.
+
+
+---------------------------
+
+
+The original class has now been broken down into seperate classes, both for
+security and ease of use.
+
+The demo folder contains a demo single file application, you should note that 
+both the app folder and server also contain seperate demo files. The App folder 
+contains the classes that would be required by the application using this class. 
+And the Server folder contains the class that would be used by your license 
+server setup.
+
+The additional folder, Shared, contains the main distributionLicense class and 
+is needed by both the app and server classes. The demo files should explain 
+the new setup.
+
+I have added new features removed some old redundant ones, and updated others.
+
+I do eventually want to evolve this class into an application with a gui, and
+will be looking for help with that if anybody cares to offer.
+
