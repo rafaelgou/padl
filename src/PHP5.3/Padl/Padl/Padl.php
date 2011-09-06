@@ -95,7 +95,7 @@ class Padl {
     *
     * @var strings
     */
-    protected $BEGIN1     = 'BEGIN LICENSE KEY';
+    protected $BEGIN1    = 'BEGIN LICENSE KEY';
     protected $END1      = 'END LICENSE KEY';
 
     /**
@@ -617,7 +617,7 @@ class Padl {
             unset($this->$value);
         }
         # define that class is secure
-        define('_PADL_SECURE_', 1);
+        define('_PADL_SECURE_', true);
     }
     
     /**
@@ -635,10 +635,13 @@ class Padl {
             # if(defined('_PADL_REPORT_ABUSE_')) $this->_post_data($this->_HOST, $this->_PATH, array());
             # trigger the error because user has attempted to access secured functions
             # after the call has been made to 'make_secure'
-            trigger_error("<br /><br /><span style='color: #F00;font-weight: bold;'>The PHP Application Distribution License System (PADL) has been made secure.<br />You have attempted to use functions that have been protected and this has terminated your script.<br /><br /></span>", E_USER_ERROR);
+            throw new \Exception(
+              'The PHP Application Distribution License System (PADL) has been made secure.' .
+              'You have attempted to use functions that have been protected and this has terminated your script.', 
+              500
+            );
             exit;
         }
     }
-    
 }
 

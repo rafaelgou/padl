@@ -51,7 +51,7 @@ class LicenseArchitect extends LicenseApplication {
     {
       # check to see if the class has been secured
       $this->_check_secure();
-      $this->license_application($license_path, $use_mcrypt, $use_time, $use_server, $allow_local);
+      parent::__construct($license_path, $use_mcrypt, $use_time, $use_server, $allow_local);
     }
     
     /**
