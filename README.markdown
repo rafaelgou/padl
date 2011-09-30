@@ -11,8 +11,8 @@ http://www.phpclasses.org/package/2298-PHP-Generate-PHP-application-license-keys
 
 You can see a quote about:
 
-There are several solutions to help developers protecting the PHP software 
-of applications that they want to sell.
+    There are several solutions to help developers protecting the PHP software 
+    of applications that they want to sell.
 
     Usually the developers provide license keys with their software 
     that include information about the licensed code, enabled features, 
