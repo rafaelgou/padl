@@ -1,0 +1,38 @@
+#padl_alert {
+    background-color: #5792c3;
+    width: 50%;
+    margin: 0 auto;
+    padding: 1%;
+    border-radius:10px;
+    -webkit-border-radius:10x;
+    -moz-border-radius:10px;
+}
+
+#padl_credits{
+    background: url(../images/padl_logo.png) no-repeat left center;
+    height: 50px;
+    padding: 0 0 0 150px;
+    color: #ffffff;
+}
+
+#padl_message {
+    background: #fff;
+    color: #555;
+    padding: 2%;
+    border-radius:10px;
+    -webkit-border-radius:10x;
+    -moz-border-radius:10px;
+    margin-bottom: 1%;
+}
+
+#padl_result {
+    background: #fff url(../images/alert.gif) no-repeat left center;
+    font-family: Helvetica, sans-serif;
+    font-size: 50px;
+    color: #5792c3;
+    text-transform: uppercase;
+    font-weight: bold;
+    padding: 0 0 0 80px;
+    margin-bottom: 1%;
+}
+

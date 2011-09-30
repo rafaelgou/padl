@@ -7,7 +7,7 @@ class PadlAutoloader {
 	public static $loader;
 	
 	private function __construct() {
-		spl_autoload_register(array($this, 'license'));
+		spl_autoload_register(array($this, 'padl'));
 	}
 
 	public static function init() {
@@ -24,8 +24,8 @@ class PadlAutoloader {
 		}
 	}
 	
-	public function license($class) {
-		$this->addClass('license', $class);
+	public function padl($class) {
+		$this->addClass('Padl', $class);
 	}
 
 }

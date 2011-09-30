@@ -1,12 +1,8 @@
 <?php
 class PadlLibrary {
 	
-	const VERSION = "2.0.0";
 	private static $library;
 	private static $path;
-//	public static $resources;
-//	public static $config;
-//	public static $log;
 	
 	private function __construct() {
 		self::$path = (dirname(__FILE__));
@@ -16,9 +12,6 @@ class PadlLibrary {
 		} else {
 			require_once "loader".DIRECTORY_SEPARATOR."PadlAutoFunctionLoader.php";
 		}
-//		self::$resources = PadlResources::init();
-//		self::$config = PadlConfig::init();
-//		self::$log = LogPadl::init();
 	}
 	
 	public static function init() {

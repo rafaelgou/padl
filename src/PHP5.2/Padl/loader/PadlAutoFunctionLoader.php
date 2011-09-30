@@ -6,7 +6,7 @@ if (class_exists('PadlLibrary')) {
 	function __autoload($class) {
 		
 		$dirs = array(
-			'license',
+			'Padl',
 		);
 		
 		foreach ($dirs as $d) {
