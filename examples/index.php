@@ -6,7 +6,7 @@
         <div class="hero-unit">
             <h1 style="font-size: 3em">PHP Aplication Distribution Licensing</h1>
             <p>
-                A simple and secure way to secure your PHP Applications and Libraries.  
+                A simple way to secure your PHP Applications and Libraries.  
             </p>
         </div>
 
