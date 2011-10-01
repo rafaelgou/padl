@@ -33,7 +33,7 @@
               <div class="span5 columns">
                 <h6>Fork on GitHub</h6>
                 <p>Download, fork, pull, file issues, and more with the official Padl repo on Github.</p>
-                <p><a target="_blank" href="https://github.com/rafaelgou/padl" class="btn primary">Bootstrap on GitHub &raquo;</a></p>
+                <p><a target="_blank" href="https://github.com/rafaelgou/padl" class="btn primary">PADL on GitHub &raquo;</a></p>
               </div>
             </div><!-- /row -->
           </div>
