@@ -1,6 +1,13 @@
 # PHP Aplication Distribution Licensing
 
-Alpha public version
+## What is PADL?
+
+A class to generate and validate licenses for a domain, restricting
+an expire date.
+
+## Demo
+
+See the [PADL Site](http://padl.rgou.net).
 
 ## History
 
@@ -48,8 +55,83 @@ This versions are the same, but the loader are different and the 5.3 version use
 There are some updates in the structure, class names and methods to remote validation to 
 adapt to 2011 days.
 
-A validator server is not yet implemented.
+## TODO 
+
+A validator server is not yet implemented - code was not converted to PHP 5.2 and 5.3 -
+but in fact it could be done very easily with a webservice.
 
 ## Usage
 
 On `examples` directory there are a many examples of basic usage.
+Run the examples under a web server.
+
+To test under a localhost, use the parameter *allowLocal=True*.
+
+To generate and validate the license the code *MUST BE* and *MUST RUN*
+under the domain to be validated.
+
+You can store the license in a file, database, or even remotely.
+
+### Include the library
+
+Autoloader for PHP 5.3
+
+    // Register Autoload 
+    include_once('PATH_TO/src/PHP5.3/Padl/Padl.php');
+    Padl::registerAutoload();
+
+Autoloader for PHP 5.2
+
+    // Register Autoload
+    include_once('../../src/PHP5.2/Padl/PadlLibrary.php');
+    PadlLibrary::init();
+
+### Generate:
+
+    /*
+    Instance of License
+    parameters:
+    - useMcrypt
+    - useTime
+    - useServer
+    - allowLocal
+    */
+    $padl = new Padl\License(true, true, true, true);
+
+    //For better security injecting a copy of $_SERVER global var
+    $server_array = $_SERVER;
+    $padl->setServerVars($server_array);
+
+    $date_expire = '12/31/2011';
+    list($month, $day, $year) = explode($date_expire);
+    // Calculating the time offset (expire_in)
+    $now       = mktime(date('H'), date('i'), date('s'), date('m'), date('d') , date('Y'));
+    $dateLimit = mktime(23, 59, 59, $month, $day, $year);
+    $expireIn  = $dateLimit - $now;
+
+    // Generating a key with your server details
+    $license = $padl->generate('localhost', 0, $expire_in);
+
+    // Save the license anywhere, database, filesystem, even remotely
+
+###  Validate
+
+    /*
+    Instance of License
+    parameters used in this sample:
+    - useMcrypt  = false 
+    - useTime    = true
+    - useServer  = false
+    - allowLocal = true
+    */
+    $padl = new PadlLicense(true, true, true, true);
+
+    // For better security injecting a copy of $_SERVER global var
+    $server_array = $_SERVER;
+    $padl->setServerVars($server_array);
+
+    // get the license from a form, or load from database, filesystem
+    $license = (... load the license ...);
+
+    // the set key is the key validated
+    $results = $padl->validate($license);

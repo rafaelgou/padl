@@ -6,6 +6,11 @@
             <h1 style="font-size: 3em">About PHP Aplication Distribution Licensing</h1>
         </div>
 
+        <h2>What is PADL?</h2>
+        <p>
+            A class to generate and validate licenses for a domain, restricting an expire date.
+        </p>
+
         <h2>History</h2>
         <p>
             PADL is a originaly written in 2005 by <strong>Oliver Lillie</strong> under older PHP4, parked o PHPCLASSES site.
@@ -47,7 +52,7 @@
         </blockquote>
         <p>
             When I need to licence a PHP project, found this class and as it was so well written,
-            it was very easy to update it to PH 5.2 and 5.3.
+            it was very easy to update it to PHP 5.2 and 5.3.
         </p>
         <p>
             You can find more about the original author in:
@@ -78,8 +83,12 @@
             There are some updates in the structure, class names and methods to remote validation
             to adapt to 2011 days.
         </p>
+
+
+        <h2>To do</h2>
         <p>
-            A validator server is not yet implemented.
+            A validator server is not yet implemented - code was not converted to PHP 5.2 and 5.3 -
+            but in fact it could be done very easily with a webservice.
         </p>
 
     </div> <!-- /container -->

@@ -2,26 +2,26 @@
 if (isset($_POST['submit'])) 
 {        
     // register autoload
-    include_once('../../src/PHP5.3/Padl/Padl.php');
-    Padl::registerAutoload();
+    include_once('../src/PHP5.2/Padl/PadlLibrary.php');
+    PadlLibrary::init();
 
     // gets the data and transform to boolean
     $domain      = $_POST['domain'];
-    $use_mcrypt  = $_POST['use_mcrypt']  == 'true' ?  true : false;
-    $use_time    = $_POST['use_time']    == 'true' ?  true : false;
-    $use_server  = $_POST['use_server']  == 'true' ?  true : false;
-    $allow_local = $_POST['allow_local'] == 'true' ?  true : false;
+    $useMcrypt  = $_POST['useMcrypt']  == 'true' ?  true : false;
+    $useTime    = $_POST['useTime']    == 'true' ?  true : false;
+    $useServer  = $_POST['useServer']  == 'true' ?  true : false;
+    $allowLocal = $_POST['allowLocal'] == 'true' ?  true : false;
 
     // calculates the offset (expire_in)
     $now         = mktime(date('H'), date('i'), date('s'), date('m'), date('d') , date('Y'));
-    $date_limit  = mktime(23, 59, 59, 
-            $_POST['date_limit_month'], 
-            $_POST['date_limit_day'], 
-            $_POST['date_limit_year']);
-    $expire_in = $date_limit - $now;
+    $dateLimit  = mktime(23, 59, 59, 
+            $_POST['dateLimitMonth'], 
+            $_POST['dateLimitDay'], 
+            $_POST['dateLimitYear']);
+    $expireIn = $dateLimit - $now;
 
     // instatiate the class
-    $padl = new Padl\License($use_mcrypt, $use_time, $use_server, $allow_local);
+    $padl = new PadlLicense($useMcrypt, $useTime, $useServer, $allowLocal);
 
     // copy the server vars (important for security, see note below)
     $server_array = $_SERVER;
@@ -32,10 +32,10 @@ if (isset($_POST['submit']))
     // to fit the key thus making it possible to use your app on any domain
     // you should copy your server vars in the first line of your active script so you can
     // use the unmodified copy of the vars
-    $padl->set_server_vars($server_array);
+    $padl->setServerVars($server_array);
     
     // generate a key with your server details
-    $license = $padl->generate($domain, 0, $expire_in);
+    $license = $padl->generate($domain, 0, $expireIn);
     
     header("Content-Type: application/save");
     header("Content-Length:".strlen($license)); 
@@ -54,16 +54,16 @@ if (isset($_POST['submit']))
             <h1 style="font-size: 3em">Generate File Key</h1>
         </div>
 
-        <form action="example-generatefilekey.php" method="post">
+        <form action="example-generatefilekey-php52.php" method="post">
             
             <fieldset> 
 
-                <legend>Data for Instatiate Padl\License Class</legend> 
+                <legend>Data for Instatiate PadlLicense Class</legend> 
 
                 <div class="clearfix"> 
-                    <label for="use_mcrypt">Use MCript</label> 
+                    <label for="useMcrypt">Use MCript</label> 
                     <div class="input"> 
-                        <select name="use_mcrypt" id="use_mcrypt"> 
+                        <select name="useMcrypt" id="useMcrypt"> 
                             <option value="true">true</option> 
                             <option value="false">false</option> 
                         </select>
@@ -75,9 +75,9 @@ if (isset($_POST['submit']))
                 </div> 
 
                 <div class="clearfix"> 
-                    <label for="use_time">Use Time</label> 
+                    <label for="useTime">Use Time</label> 
                     <div class="input"> 
-                        <select name="use_time" id="use_time"> 
+                        <select name="useTime" id="useTime"> 
                             <option value="true">true</option> 
                             <option value="false">false</option> 
                         </select>
@@ -88,9 +88,9 @@ if (isset($_POST['submit']))
                 </div> 
 
                 <div class="clearfix"> 
-                    <label for="use_server">Use server</label> 
+                    <label for="useServer">Use server</label> 
                     <div class="input"> 
-                        <select name="use_server" id="use_server"> 
+                        <select name="useServer" id="useServer"> 
                             <option value="true">true</option> 
                             <option value="false">false</option> 
                         </select>
@@ -101,9 +101,9 @@ if (isset($_POST['submit']))
                 </div> 
 
                 <div class="clearfix"> 
-                    <label for="allow_local">Allow Local</label> 
+                    <label for="allowLocal">Allow Local</label> 
                     <div class="input"> 
-                        <select name="allow_local" id="allow_local"> 
+                        <select name="allowLocal" id="allowLocal"> 
                             <option value="false">false</option> 
                             <option value="true">true</option> 
                         </select>
@@ -118,7 +118,7 @@ if (isset($_POST['submit']))
 
             <fieldset> 
                 
-                <legend>Data for Padl\License::generate Method</legend> 
+                <legend>Data for PadlLicense::generate Method</legend> 
           
                 <div class="clearfix"> 
                     <label for="domain">Domain</label> 
@@ -134,7 +134,7 @@ if (isset($_POST['submit']))
                     <label>Date Limit</label> 
                     <div class="input"> 
                         <div class="inline-inputs"> 
-                            <select class="small" name="date_limit_month" id="date_limit_month"> 
+                            <select class="small" name="dateLimitMonth" id="dateLimitMonth"> 
                                 <option value="1">January</option> 
                                 <option value="2">February</option> 
                                 <option value="3">March</option> 
@@ -148,12 +148,12 @@ if (isset($_POST['submit']))
                                 <option value="11">November</option> 
                                 <option value="12">December</option> 
                             </select> 
-                            <select class="mini" name="date_limit_day" id="date_limit_day"> 
+                            <select class="mini" name="dateLimitDay" id="dateLimitDay"> 
                                 <?php for($i=1; $i<=31; $i++) : ?>
                                 <option value="<?php echo $i ?>"><?php echo $i ?></option>
                                 <?php endfor; ?>
                             </select> 
-                            <select class="mini" name="date_limit_year" id="date_limit_year"> 
+                            <select class="mini" name="dateLimitYear" id="dateLimitYear"> 
                                 <?php for($i=date('Y'); $i<=date('Y')+10; $i++) : ?>
                                 <option value="<?php echo $i ?>"><?php echo $i ?></option>
                                 <?php endfor; ?>

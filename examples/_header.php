@@ -26,6 +26,7 @@
                   <ul>
                       <li><a href="index.php">Home &amp; Examples</a></li>
                       <li><a href="tips.php">Tips &amp; Tricks</a></li>
+                      <li><a href="basics.php">Basic Usage</a></li>
                       <li><a href="about.php">About</a></li>
                  </ul>
                   <ul class="nav secondary-nav">

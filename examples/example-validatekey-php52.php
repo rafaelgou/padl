@@ -6,15 +6,15 @@
             <h1 style="font-size: 3em">Validate File Key</h1>
         </div>
 
-        <form action="example-validatekey.php#result" method="post" enctype="multipart/form-data"> 
+        <form action="example-validatekey-php52.php#result" method="post" enctype="multipart/form-data"> 
             <fieldset> 
 
-                <legend>Data for Instantiate PadlLicense Class</legend> 
+                <legend>Data for Instatiate PadlLicense Class</legend> 
 
                 <div class="clearfix"> 
-                    <label for="use_mcrypt">Use MCript</label> 
+                    <label for="useMcrypt">Use MCript</label> 
                     <div class="input"> 
-                        <select name="use_mcrypt" id="use_mcrypt"> 
+                        <select name="useMcrypt" id="useMcrypt"> 
                             <option value="true">true</option> 
                             <option value="false">false</option> 
                         </select>
@@ -26,9 +26,9 @@
                 </div> 
 
                 <div class="clearfix"> 
-                    <label for="use_time">Use Time</label> 
+                    <label for="useTime">Use Time</label> 
                     <div class="input"> 
-                        <select name="use_time" id="use_time"> 
+                        <select name="useTime" id="useTime"> 
                             <option value="true">true</option> 
                             <option value="false">false</option> 
                         </select>
@@ -39,9 +39,9 @@
                 </div> 
 
                 <div class="clearfix"> 
-                    <label for="use_server">Use server</label> 
+                    <label for="useServer">Use server</label> 
                     <div class="input"> 
-                        <select name="use_server" id="use_server"> 
+                        <select name="useServer" id="useServer"> 
                             <option value="true">true</option> 
                             <option value="false">false</option> 
                         </select>
@@ -52,9 +52,9 @@
                 </div> 
 
                 <div class="clearfix"> 
-                    <label for="allow_local">Allow Local</label> 
+                    <label for="allowLocal">Allow Local</label> 
                     <div class="input"> 
-                        <select name="allow_local" id="allow_local"> 
+                        <select name="allowLocal" id="allowLocal"> 
                             <option value="false">false</option> 
                             <option value="true">true</option> 
                         </select>
@@ -94,31 +94,32 @@
         <dl>
 
             <dt>Use Mcript</dt>
-            <dd><?php echo $_POST['use_mcrypt']?></dd>
+            <dd><?php echo $_POST['useMcrypt']?></dd>
             
             <dt>Use Time</dt>
-            <dd><?php echo $_POST['use_time']?></dd>
+            <dd><?php echo $_POST['useTime']?></dd>
             
             <dt>Use Server</dt>
-            <dd><?php echo $_POST['use_server']?></dd>
+            <dd><?php echo $_POST['useServer']?></dd>
             
             <dt>Allow Local</dt>
-            <dd><?php echo $_POST['allow_local']?></dd>
+            <dd><?php echo $_POST['allowLocal']?></dd>
             
         </dl>
         
     <?php
     // register autoload
-    include_once('../../src/PHP5.2/Padl/Padl.php');
+    include_once('../src/PHP5.2/Padl/PadlLibrary.php');
+    PadlLibrary::init();
 
     // gets the data and transform to boolean
-    $use_mcrypt  = $_POST['use_mcrypt']  == 'true' ?  true : false;
-    $use_time    = $_POST['use_time']    == 'true' ?  true : false;
-    $use_server  = $_POST['use_server']  == 'true' ?  true : false;
-    $allow_local = $_POST['allow_local'] == 'true' ?  true : false;
+    $useMcrypt  = $_POST['useMcrypt']  == 'true' ?  true : false;
+    $useTime    = $_POST['useTime']    == 'true' ?  true : false;
+    $useServer  = $_POST['useServer']  == 'true' ?  true : false;
+    $allowLocal = $_POST['allowLocal'] == 'true' ?  true : false;
 
-    // Instantiate the class
-    $padl = new PadlLicense($use_mcrypt, $use_time, $use_server, $allow_local);
+    // instatiate the class
+    $padl = new PadlLicense($useMcrypt, $useTime, $useServer, $allowLocal);
 
     // copy the server vars (important for security, see note below)
     $server_array = $_SERVER;
@@ -129,27 +130,28 @@
     // to fit the key thus making it possible to use your app on any domain
     // you should copy your server vars in the first line of your active script so you can
     // use the unmodified copy of the vars
-    $padl->set_server_vars($server_array);
+    $padl->setServerVars($server_array);
     
     ?>
         <h2>Instantiation</h2>
         <pre>
-// register autoload
-include_once('../../src/PHP5.2/Padl/Padl.php');
+// Register Autoload
+include_once('../src/PHP5.2/Padl/PadlLibrary.php');
+PadlLibrary::init();
 
 /*
 Instance of License
 parameters used in this sample:
-- use_mcrypt  = false 
-- use_time    = true
-- use_server  = false
-- allow_local = true
+- useMcrypt  = false 
+- useTime    = true
+- useServer  = false
+- allowLocal = true
 */
-$padl = new PadlLicense(<?php echo $_POST['use_mcrypt'] ?>, <?php echo $_POST['use_time'] ?>, <?php echo $_POST['use_server'] ?>, <?php echo $_POST['allow_local'] ?>);
+$padl = new PadlLicense(<?php echo $_POST['useMcrypt'] ?>, <?php echo $_POST['useTime'] ?>, <?php echo $_POST['useServer'] ?>, <?php echo $_POST['allowLocal'] ?>);
 
 // For better security injecting a copy of $_SERVER global var
 $server_array = $_SERVER;
-$padl->set_server_vars($server_array);
+$padl->setServerVars($server_array);
         </pre>
         
     <?php 

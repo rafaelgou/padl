@@ -1,9 +1,9 @@
 <?php
 /**
- * Padl Autoload Class
+ * Padl Library Loader Class
  * 
  * Project:   PHP Application Distribution License Class
- * File:      Padl.php
+ * File:      PadlLibrary.php
  *
  * Copyright (C) 2005 Oliver Lillie
  * Copyright (C) 2011 Rafael Goulart
@@ -32,64 +32,60 @@
  * @history---------------------------------------------
  * see CHANGELOG
  */
-class Padl
+class PadlLibrary
 {
+    /**
+     * Instance of this class
+     * @var PadlLibrary
+     */
+    private static $library;
 
     /**
-     * The init path for autoload
+     * Path of this file
      * @var string
      */
-    static public $initPath;
-
-    /**
-     * Flag to check if is already intialized
-     * @var boolean
-     */
-    static public $initialized = false;
+    private static $path;
 
     /**
      * Constructor
      *
      * set private to avoid directly instatiation to implement
-     * but is not a Singleton Design Pattern
+     * Singleton Design Pattern
      **/
     private function __construct()
     {
+        self::$path = (dirname(__FILE__));
+        if (function_exists('spl_autoload_register')) {
+            require_once "loader".DIRECTORY_SEPARATOR."PadlAutoLoader.php";
+            PadlAutoloader::registerAutoload();
+        } else {
+            require_once "loader".DIRECTORY_SEPARATOR."PadlAutoLoaderFunction.php";
+        }
     }
 
     /**
-     * Configure autoloading using Padl.
+     * Initialize autoloading for Padl.
      *
      * This is designed to play nicely with other autoloaders.
      *
-     * @param string $initPath The init script to load when autoloading the first Padl class
-     * 
      * @return void
      */
-    public static function registerAutoload($initPath = null)
+    public static function init()
     {
-        self::$initPath = $initPath;
-        spl_autoload_register(array('Padl', 'autoload'));
+        if (self::$library == null) {
+            self::$library = new PadlLibrary();
+        }
+        return self::$library;
     }
 
     /**
-     * Internal autoloader for spl_autoload_register().
-     *
-     * @param string $class The class to load
-     *
-     * @return void
+     * Returns de path
+     * 
+     * @return string
      */
-    public static function autoload($class)
+    public final static function getPath()
     {
-        $path = dirname(__FILE__).'/'.str_replace('\\', '/', $class).'.php';
-        if (!file_exists($path)) {
-            return;
-        }
-        if (self::$initPath && !self::$initialized) {
-            self::$initialized = true;
-            require self::$initPath;
-        }
-        require_once $path;
+        return self::$path;
     }
 
-}	
+}
