@@ -1,0 +1,36 @@
+{
+    "name": "rafaelgou/padl",
+    "description": "PHP Aplication Distribution Licensing",
+    "type": "project",
+    "license": "LGPL",
+    "authors": [
+        {
+            "name": "Rafael Goulart",
+            "email": "rafaelgou@gmail.com"
+        },
+        {
+            "name": "Oliver Lillie",
+            "email": "publicmail@buggedcom.co.uk"
+        }
+    ],
+    "autoload": {
+      "psr-4": {
+        "": "src/",
+        "Padl\\": "Padl/"
+      }
+    },
+    "require": {},
+    "require-dev": {
+        "escapestudios/symfony2-coding-standard": "^2.9",
+        "cvuorinen/phpdoc-markdown-public": "^0.1.2"
+    },
+    "scripts": {
+        "phpcs": [
+          "./vendor/bin/phpcs --config-set installed_paths vendor/escapestudios/symfony2-coding-standard",
+          "./vendor/bin/phpcs --standard=Symfony2 src"
+        ],
+        "phpdoc": [
+          "./vendor/bin/phpdoc"
+        ]
+    }
+}

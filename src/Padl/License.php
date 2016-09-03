@@ -1,7 +1,10 @@
 <?php
+namespace Padl;
+
 /**
- * Project:   Distrubution License Class
- * File:      PadlLicense.php
+ * Padl Licence Class
+ * Project:   PHP Application Distribution License Class
+ * File:      License.php
  *
  * Copyright (C) 2005 Oliver Lillie
  * Copyright (C) 2011 Rafael Goulart
@@ -30,7 +33,7 @@
  * @history---------------------------------------------
  * see CHANGELOG
  */
-class PadlLicense
+class License
 {
     /**
     * hash key 1 used to encrypt the generate key data.
@@ -179,9 +182,9 @@ class PadlLicense
      * @param boolean $useServer  boolean Sets if server binding should be used in the key (defaults to true)
      * @param boolean $allowLocal boolean Sets if server binding is in use then localhost servers are valid (defaults to false)
      *
-     * @return void 
+     * @return void
      **/
-    public function __construct($useMcrypt=true, $useTime=true, $useServer=true, $allowLocal=false)
+    public function __construct($useMcrypt = true, $useTime = true, $useServer = true, $allowLocal = false)
     {
         $this->init($useMcrypt, $useTime, $useServer, $allowLocal);
         if ($this->useServer) {
@@ -198,11 +201,11 @@ class PadlLicense
      * @param boolean $useTime    Sets if time binding should be used in the key (defaults to true)
      * @param boolean $useServer  Sets if server binding should be used in the key (defaults to true)
      * @param boolean $allowLocal Sets if server binding is in use then localhost servers are valid (defaults to false)
-     * 
+     *
      * @return void
-     * 
+     *
      **/
-    public function init($useMcrypt=true, $useTime=true, $useServer=true, $allowLocal=false)
+    public function init($useMcrypt = true, $useTime = true, $useServer = true, $allowLocal = false)
     {
         $this->useMcrypt  = ($useMcrypt && function_exists('mcrypt_generic'));
         $this->useTime    = $useTime;
@@ -221,26 +224,26 @@ class PadlLicense
      *
      * @param array $array The copied $server array
      *
-     * @return void 
+     * @return void
      **/
     public function setServerVars($array)
     {
-      $this->serverVars = $array;
-      // some of the ip data is dependant on the $server vars, so update them
-      // after the vars have been set
-      $this->ips      = $this->getIpAddress();
-      // update the server info
-      $this->serverInfo  = $this->getServerInfo();
+        $this->serverVars = $array;
+        // some of the ip data is dependant on the $server vars, so update them
+        // after the vars have been set
+        $this->ips        = $this->getIpAddress();
+        // update the server info
+        $this->serverInfo = $this->getServerInfo();
     }
 
     /**
      * Validate a license
      *
      * @param string $license The license string
-     * 
+     *
      * @return array
      **/
-    public function validate ($license)
+    public function validate($license)
     {
         return $this->doValidate($license);
     }
@@ -252,14 +255,204 @@ class PadlLicense
      * @param string $dialhost The host to dial
      * @param string $dialpath The path to dial
      * @param string $dialport The port of the host
-     * 
+     *
      * @return array
      */
-    public function validateRemote ($license, $dialhost, $dialpath, $dialport="80")
+    public function validateRemote($license, $dialhost, $dialpath, $dialport = "80")
     {
         return $this->doValidate($license, true, $dialhost, $dialpath, $dialport);
     }
 
+    /**
+     * Sets the Date Format
+     *
+     * @param string $dateFormat The date format to use on license
+     *
+     * @return void
+     */
+    public function setDateFormat($dateFormat)
+    {
+        $this->dateString = $dateFormat;
+    }
+
+    /**
+     * writeKey
+     *
+     * writes the key
+     *
+     * @param string $key      The key string
+     * @param type   $filePath The path of the file
+     *
+     * @return boolean Returns boolean on success
+     **/
+    public function writeKey($key, $filePath)
+    {
+        // open the key file for writeing and truncate
+        $h = fopen($filePath, 'w');
+        // if write fails return error
+        if (fwrite($h, $key) === false) {
+            return false;
+        }
+        // close file
+        fclose($h);
+        // return key
+        return true;
+    }
+
+    /**
+     * registerInstall
+     *
+     * registers the install with the home server and if registration is
+     * excepted it then generates and installs the key.
+     *
+     * @param string $domain   The domain to register the license to
+     * @param number $start    The start time of the license, can be either
+     *                         the actuall time or the time span until the license is valid
+     * @param number $expireIn Number of seconds untill the license
+     *                         expires after start, or 'NEVER' to never expire
+     * @param array  $data     Array that contains the info to be validated
+     * @param string $dialhost Host name of the server to be contacted
+     * @param string $dialpath Path of the script for the data to be sent to
+     * @param number $dialport Port Number to send the data through
+     *
+     * @return string Returns the encrypted install validation
+     **/
+    public function registerInstall($domain, $start, $expireIn, $data, $dialhost, $dialpath, $dialport = '80')
+    {
+        // check to see if the class has been secured
+        $this->check_secure();
+
+        // check if key is alread generated
+        // TODO
+        if (@filesize($this->licensePath) > 4) {
+            return array('RESULT' => 'KEY_EXISTS');
+        }
+
+        $data = array('DATA' => $data);
+
+        // if the server matching is required then get the info
+        if ($this->useServer) {
+            // evaluate the supplied domain against the collected ips
+            if (!$this->compareDomainIp($domain, $this->ips)) {
+                return array('RESULT' => 'DOMAIN_IP_FAIL');
+            }
+            // check server uris
+            if (count($this->serverInfo) < $this->requiredUris) {
+                return array('RESULT' => 'SERVER_FAIL');
+            }
+            $data['SERVER']['MAC']    = $this->mac;
+            $data['SERVER']['PATH']   = $this->serverInfo;
+            $data['SERVER']['IP']     = $this->ips;
+            $data['SERVER']['DOMAIN'] = $domain;
+        }
+
+        // if use time restrictions
+        if ($this->useTime) {
+            $current = time();
+            $start   = ($current < $start) ? $start : $current+$start;
+            // set the dates
+            $data['DATE']['START'] = $start;
+            if ($expireIn === 'NEVER') {
+                $data['DATE']['SPAN']   = '~';
+                $data['DATE']['END']   = 'NEVER';
+            } else {
+                $data['DATE']['SPAN']   = $expireIn;
+                $data['DATE']['END']   = $start+$expireIn;
+            }
+        }
+        // includethe id for requests
+        $data['ID'] = md5($this->id2);
+        // post the data home
+        $data = $this->postData($dialhost, $dialpath, $data, $dialport);
+        // return the result and key if approved
+        return (empty($data['RESULT'])) ? array('RESULT' => 'SOCKET_FAILED') : $data;
+    }
+
+    /**
+     * generate
+     *
+     * generates the server key when the license class resides on the server
+     * returns:
+     * - KEY_EXISTS     - key has already been written and thus can't write
+     * - DOMAIN_IP_FAIL - means the domain name supplied doesn't match the corresponding ip
+     * - SERVER_FAIL    - enough server vars failed to be found
+     *
+     * @param string $domain     The domain to bind the license to.
+     * @param number $start      The number of seconds untill the key is valid
+     *                           if the value is 0 then the current value given by time() is
+     *                           used as the start date.
+     * @param number $expireIn   The number of seconds the key will be valid
+     *                           for (the default reverts to 31449600 - 1 year)
+     * @param array  $otherArray An array that can contain any other data you
+     *                           want to store in the key
+     *
+     * @return string Key string
+     **/
+    public function generate($domain = '', $start = 0, $expireIn = 31449600, $otherArray = array())
+    {
+
+        // if the URIS returned are false it means that there has not been
+        // enough unique data returned by the $server so cannot generate key
+        if ($this->serverInfo !== false || !$this->useServer) {
+            // set the id
+            $data['ID']         = md5($this->id1);
+
+            // set server binds
+            if ($this->useServer) {
+                // evaluate the supplied domain against the collected ips
+                if (!$this->compareDomainIp($domain, $this->ips)) {
+                    return 'DOMAIN_IP_FAIL';
+                }
+
+                // set the domain
+                $data['SERVER']['DOMAIN'] = $domain;
+                // set the mac id
+                $data['SERVER']['MAC']    = $this->mac;
+                // set the server arrays
+                $data['SERVER']['PATH']   = $this->serverInfo;
+                // set the ip arrays
+                $data['SERVER']['IP']     = $this->ips;
+            }
+
+            // set time binds
+            if ($this->useTime && !is_array($start)) {
+                $current = time();
+                $start   = ($current < $start) ? $start : $current+$start;
+                // set the dates
+                $data['DATE']['START'] = $start;
+                $data['DATE']['SPAN']  = $expireIn;
+                if ($expireIn === 'NEVER') {
+                    $data['DATE']['END']   = 'NEVER';
+                } else {
+                    $data['DATE']['END']   = $start+$expireIn;
+                }
+            }
+
+            // if start is array then it is the other array and time binding is not in use
+            // convert to other array
+            if (is_array($start)) {
+                $otherArray = $start;
+            }
+
+            // set the server os
+            $otherArray['_PHP_OS'] = PHP_OS;
+
+            // set the server os
+            $otherArray['_PHP_VERSION'] = PHP_VERSION;
+
+            // merge the data with the other array
+            $data['DATA'] = $otherArray;
+
+            // encrypt the key
+            $key = $this->wrapLicense($data);
+
+
+            // return the key
+            return $key;
+        }
+        // no key can be generated so returns false
+        return 'SERVER_FAIL';
+    }
     /**
      * doValidate
      *
@@ -280,16 +473,16 @@ class PadlLicense
      * @param string  $dialhost The host to dial
      * @param string  $dialpath The path to dial
      * @param string  $dialport The port of the host
-     * 
-     * @return array 
+     *
+     * @return array
      * @return array
      **/
-    protected function doValidate($license, $dialhome=false, $dialhost="", $dialpath="", $dialport="80")
+    protected function doValidate($license, $dialhome = false, $dialhost = "", $dialpath = "", $dialport = "80")
     {
-//      // check to see if the class has been secured
-//      $this->check_secure();
+        //// check to see if the class has been secured
+        //$this->check_secure();
 
-        if (strlen($license)>0) {
+        if (strlen($license) > 0) {
             // decrypt the data
             $data = $this->unwrapLicense($license);
             if (is_array($data)) {
@@ -310,7 +503,7 @@ class PadlLicense
                     $data['DATE']['HUMAN']['END']   = date($this->dateString, $data['DATE']['END']);
                 }
                 if ($this->useServer) {
-                    $mac     = $data['SERVER']['MAC'] == $this->mac;
+                    $mac     = $data['SERVER']['MAC'] === $this->mac;
                     $path    = count(array_diff($this->serverInfo, $data['SERVER']['PATH'])) <= $this->allowedServerDifs;
                     $domain  = $this->compareDomainIp($data['SERVER']['DOMAIN'], $this->ips);
                     $ip      = count(array_diff($this->ips, $data['SERVER']['IP'])) <= $this->allowedIpDifs;
@@ -321,7 +514,7 @@ class PadlLicense
                     }
 
                     // check if local
-                    $local = $this->allowLocal && (in_array('127.0.0.1', $data['SERVER']['IP']) || $data['PATH']['SERVER_ADDR'] == '127.0.0.1' || $data['PATH']['HTTP_HOST'] == '127.0.0.1');
+                    $local = $this->allowLocal && (in_array('127.0.0.1', $data['SERVER']['IP']) || $data['PATH']['SERVER_ADDR'] === '127.0.0.1' || $data['PATH']['HTTP_HOST'] === '127.0.0.1');
                     if (!$local) {
                         $data['RESULT'] = 'ILLEGAL_LOCAL';
                     }
@@ -347,27 +540,15 @@ class PadlLicense
                 // the are two reason that mean a invalid return
                 // 1 - the other hash key is different
                 // 2 - the key has been tampered with
-                return array('RESULT'=>'INVALID');
+                return array('RESULT' => 'INVALID');
             }
         }
-      // returns empty because there is nothing in the dat_string
-      return array('RESULT'=>'EMPTY');
+        // returns empty because there is nothing in the dat_string
+        return array('RESULT' => 'EMPTY');
     }
 
     /**
-     * Sets the Date Format
-     * 
-     * @param string $dateFormat The date format to use on license
-     * 
-     * @return void
-     */
-    public function setDateFormat($dateFormat)
-    {
-        $this->dateString = $dateFormat;
-    }
-
-    /**
-    * post_data
+    * postData
     *
     * Posts data to and recieves data from dial home server. Returned info
     * contains the dial home validation result
@@ -376,11 +557,11 @@ class PadlLicense
     * @param string $path       Path of the script for the data to be sent to
     * @param array  $queryArray Array that contains the license key info to be validated
     * @param number $port       Port Number to send the data through
-     * 
+     *
     * @return array Result of the dialhome validation
     * @return string - SOCKET_FAILED will be returned if it was not possible to open a socket to the home server
     **/
-    protected function post_data($host, $path, $queryArray, $port=80)
+    protected function postData($host, $path, $queryArray, $port = 80)
     {
         // generate the post query info
         $query    = 'POSTDATA='.$this->encrypt($queryArray, 'HOMEKEY');
@@ -401,7 +582,7 @@ class PadlLicense
         $header = @fsockopen($host, $port);
         if (!$header) {
             // if the socket fails return failed
-            return array('RESULT'=>'SOCKET_FAILED');
+            return array('RESULT' => 'SOCKET_FAILED');
         }
         @fputs($header, $post);
         // read the returned data
@@ -427,10 +608,10 @@ class PadlLicense
      *
      * @param type  $domain The domain to compare
      * @param mixed $ips    The IPs array or false
-     * 
+     *
      * @return boolean
      **/
-    protected function compareDomainIp($domain, $ips=false)
+    protected function compareDomainIp($domain, $ips = false)
     {
         // if no ips are supplied get the ip addresses for the server
         if (!$ips) {
@@ -446,6 +627,7 @@ class PadlLicense
                 }
             }
         }
+
         return false;
     }
 
@@ -455,7 +637,7 @@ class PadlLicense
      * pad out the begin and end seperators
      *
      * @param string $str The string to be padded
-     * 
+     *
      * @return string Returns the padded string
      **/
     protected function pad($str)
@@ -463,7 +645,7 @@ class PadlLicense
         $strLen   = strlen($str);
         $spaces   = ($this->wrapto-$strLen)/2;
         $str1 = '';
-        for ($i=0; $i<$spaces; $i++) {
+        for ($i = 0; $i < $spaces; $i++) {
             $str1 = $str1.$this->pad;
         }
         if ($spaces/2 != round($spaces/2)) {
@@ -472,28 +654,29 @@ class PadlLicense
             $str = $str1.$str;
         }
         $str = $str.$str1;
+
         return $str;
     }
 
     /**
-     * get_key
+     * getKey
      *
      * gets the hash key for the current encryption
      *
      * @param string $keyType The license key type being produced
-     * 
+     *
      * @return string Returns the hash key
      **/
-    protected function get_key($keyType)
+    protected function getKey($keyType)
     {
-        switch($keyType) {
-            case 'KEY' :
+        switch ($keyType) {
+            case 'KEY':
                 return $this->hashKey1;
-            case 'REQUESTKEY' :
+            case 'REQUESTKEY':
                 return $this->hashKey2;
-            case 'HOMEKEY' :
+            case 'HOMEKEY':
                 return $this->hashKey3;
-            default :
+            default:
             // TODO missing default return!!
         }
     }
@@ -504,18 +687,17 @@ class PadlLicense
      * gets the begining license key seperator text
      *
      * @param string $keyType string The license key type being produced
-     * 
+     *
      * @return string Returns the begining string
      **/
     protected function getBegin($keyType)
     {
-        switch($keyType)
-        {
-            case 'KEY' :
+        switch ($keyType) {
+            case 'KEY':
                 return $this->begin1;
-            case 'REQUESTKEY' :
+            case 'REQUESTKEY':
                 return $this->begin2;
-            case 'HOMEKEY' :
+            case 'HOMEKEY':
                 return '';
         }
     }
@@ -526,18 +708,17 @@ class PadlLicense
      * gets the ending license key seperator text
      *
      * @param string $keyType The license key type being produced
-     * 
+     *
      * @return string Returns the ending string
      **/
     protected function getEnd($keyType)
     {
-        switch($keyType)
-        {
-            case 'KEY' :
+        switch ($keyType) {
+            case 'KEY':
                 return $this->end1;
-            case 'REQUESTKEY' :
+            case 'REQUESTKEY':
                 return $this->end2;
-            case 'HOMEKEY' :
+            case 'HOMEKEY':
                 return '';
         }
     }
@@ -549,10 +730,10 @@ class PadlLicense
      *
      * @param number $length The length of the random string
      * @param string $seeds  The string to pluck the characters from
-     * 
+     *
      * @return string Returns random string
      **/
-    protected function generateRandomString($length=10, $seeds='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890123456789')
+    protected function generateRandomString($length = 10, $seeds = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890123456789')
     {
         $str = '';
         $seedsCount = strlen($seeds);
@@ -564,6 +745,7 @@ class PadlLicense
         for ($i = 0; $length > $i; $i++) {
             $str .= $seeds{mt_rand(0, $seedsCount - 1)};
         }
+
         return $str;
     }
 
@@ -574,15 +756,15 @@ class PadlLicense
      *
      * @param array  $srcArray The data array that contains the key data
      * @param string $keyType  The type of the key to encrypt
-     * 
+     *
      * @return string Returns the encrypted string
      **/
-    protected function encrypt($srcArray, $keyType='KEY')
+    protected function encrypt($srcArray, $keyType = 'KEY')
     {
         $randAddOn = $this->generateRandomString(3);
         // get the key
-        $key   = $this->get_key($keyType);
-        $key   = $randAddOn . $key;
+        $key = $this->getKey($keyType);
+        $key = $randAddOn.$key;
 
         // check to see if mycrypt exists
         if ($this->useMcrypt) {
@@ -590,7 +772,7 @@ class PadlLicense
             $td = mcrypt_module_open($this->algorithm, '', 'ecb', '');
             $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
             // process the key
-            $key = substr($key, 0, mcrypt_enc_get_key_size($td));
+            $key = substr($key, 0, mcrypt_enc_getKey_size($td));
             // init mcrypt
             mcrypt_generic_init($td, $key, $iv);
 
@@ -609,7 +791,7 @@ class PadlLicense
             $str = serialize($srcArray);
 
             // loop through the str and encrypt it
-            for ($i=1; $i<=strlen($str); $i++) {
+            for ($i = 1; $i <= strlen($str); $i++) {
                 $char     = substr($str, $i-1, 1);
                 $keychar   = substr($key, ($i % strlen($key))-1, 1);
                 $char     = chr(ord($char)+ord($keychar));
@@ -627,15 +809,15 @@ class PadlLicense
      *
      * @param string $str     The data that contains the key data
      * @param string $keyType The type of the key to encrypt
-     * 
+     *
      * @return array Returns decrypted array
      **/
-    protected function decrypt($str, $keyType='KEY')
+    protected function decrypt($str, $keyType = 'KEY')
     {
         $randAddOn = substr($str, 0, 3);
         $str = base64_decode(base64_decode(substr($str, 3)));
         // get the key
-        $key = $randAddOn . $this->get_key($keyType);
+        $key = $randAddOn.$this->getKey($keyType);
 
         // check to see if mycrypt exists
         if ($this->useMcrypt) {
@@ -643,7 +825,7 @@ class PadlLicense
             $td = mcrypt_module_open($this->algorithm, '', 'ecb', '');
             $iv = mcrypt_create_iv(mcrypt_enc_get_iv_size($td), MCRYPT_RAND);
             // process the key
-            $key = substr($key, 0, mcrypt_enc_get_key_size($td));
+            $key = substr($key, 0, mcrypt_enc_getKey_size($td));
             // init mcrypt
             mcrypt_generic_init($td, $key, $iv);
 
@@ -656,10 +838,10 @@ class PadlLicense
         } else {
             // if mcrypt doesn't exist use regular decryption method
             // init the decrypt vars
-            $decrypt   = '';
+            $decrypt = '';
 
             // loop through the text and decode the string
-            for ($i=1; $i<=strlen($str); $i++) {
+            for ($i = 1; $i <= strlen($str); $i++) {
                 $char     = substr($str, $i-1, 1);
                 $keychar  = substr($key, ($i % strlen($key))-1, 1);
                 $char     = chr(ord($char)-ord($keychar));
@@ -677,10 +859,10 @@ class PadlLicense
      *
      * @param array  $srcArray The array that needs to be turned into a license str
      * @param string $keyType  The type of key to be wrapped (KEY=license key, REQUESTKEY=license request key)
-     * 
+     *
      * @return string Returns encrypted and formatted license key
      **/
-    protected function wrapLicense($srcArray, $keyType='KEY')
+    protected function wrapLicense($srcArray, $keyType = 'KEY')
     {
         // sort the variables
         $begin = $this->pad($this->getBegin($keyType));
@@ -690,7 +872,7 @@ class PadlLicense
         $str   = $this->encrypt($srcArray, $keyType);
 
         // return the wrap
-        return $begin . PHP_EOL . wordwrap($str, $this->wrapto, PHP_EOL, 1) . PHP_EOL . $end;
+        return $begin.PHP_EOL.wordwrap($str, $this->wrapto, PHP_EOL, 1).PHP_EOL.$end;
     }
 
     /**
@@ -700,10 +882,10 @@ class PadlLicense
     *
     * @param string $encStr  The encrypted license key string that needs to be decrypted
     * @param string $keyType The type of key to be unwrapped (KEY=license key, REQUESTKEY=license request key)
-     * 
+     *
     * @return array Returns license data array
     **/
-    protected function unwrapLicense($encStr, $keyType='KEY')
+    protected function unwrapLicense($encStr, $keyType = 'KEY')
     {
         // sort the variables
         $begin = $this->pad($this->getBegin($keyType));
@@ -723,62 +905,60 @@ class PadlLicense
      *
      * @param type $varName The var name
      * @param type $os      The os name
-     * 
+     *
      * @return string various values
      **/
     protected function getOsVar($varName, $os)
     {
         $varName = strtolower($varName);
         // switch between the os's
-        switch($os)
-        {
+        switch ($os) {
             // not sure if the string is correct for FreeBSD
             // not tested
-            case 'freebsd' :
+            case 'freebsd':
             // not sure if the string is correct for NetBSD
             // not tested
-            case 'netbsd' :
+            case 'netbsd':
             // not sure if the string is correct for Solaris
             // not tested
-            case 'solaris' :
+            case 'solaris':
             // not sure if the string is correct for SunOS
             // not tested
-            case 'sunos' :
+            case 'sunos':
             // darwin is mac os x
             // tested only on the client os
-            case 'darwin' :
+            case 'darwin':
                 // switch the var name
-                switch($varName)
-                {
-                    case 'conf' :
+                switch ($varName) {
+                    case 'conf':
                         $var = '/sbin/ifconfig';
                         break;
-                    case 'mac' :
+                    case 'mac':
                         $var = 'ether';
                         break;
-                    case 'ip' :
+                    case 'ip':
                         $var = 'inet ';
                         break;
                 }
                 break;
             // linux variation
             // tested on server
-            case 'linux' :
+            case 'linux':
                 // switch the var name
-                switch($varName)
-                {
-                    case 'conf' :
+                switch ($varName) {
+                    case 'conf':
                         $var = '/sbin/ifconfig';
                         break;
-                    case 'mac' :
+                    case 'mac':
                         $var = 'HWaddr';
                         break;
-                    case 'ip' :
+                    case 'ip':
                         $var = 'inet addr:';
                         break;
                 }
                 break;
         }
+
         return $var;
     }
 
@@ -801,7 +981,7 @@ class PadlLicense
         // if anyone has any clues for windows environments
         // or other server types let me know
         $os = strtolower(PHP_OS);
-        if (substr($os, 0, 3)=='win') {
+        if (substr($os, 0, 3) === 'win') {
             // this windows version works on xp running apache
             // based server. it has not been tested with anything
             // else, however it should work with NT, and 2000 also
@@ -810,7 +990,7 @@ class PadlLicense
             @exec('ipconfig/all', $lines);
             // count number of lines, if none returned return MAC_404
             // thanks go to Gert-Rainer Bitterlich <bitterlich -at- ima-dresden -dot- de>
-            if (count($lines) == 0) {
+            if (count($lines) === 0) {
                 return 'ERROR_OPEN';
             }
             // $path the lines together
@@ -828,6 +1008,7 @@ class PadlLicense
             $conf = @fread($fp, 4096);
             @pclose($fp);
         }
+
         return $conf;
     }
 
@@ -853,9 +1034,7 @@ class PadlLicense
             // if anyone has any clues for windows environments
             // or other server types let me know
             $os = strtolower(PHP_OS);
-            if (substr($os, 0, 3)=='win') {
-            // anyone any clues on win ip's
-            } else {
+            if (substr($os, 0, 3) !== 'win') {
                 // explode the conf into seperate lines for searching
                 $lines = explode(PHP_EOL, $conf);
                 // get the ip delim
@@ -905,9 +1084,10 @@ class PadlLicense
             return $ips;
         }
         // failed to find an ip check for conf error or return 404
-        if ($conf == 'SAFE_MODE' || $conf == 'ERROR_OPEN') {
+        if ($conf === 'SAFE_MODE' || $conf === 'ERROR_OPEN') {
             return $conf;
         }
+
         return 'IP_404';
     }
 
@@ -932,7 +1112,7 @@ class PadlLicense
         // if anyone has any clues for windows environments
         // or other server types let me know
         $os = strtolower(PHP_OS);
-        if (substr($os, 0, 3)=='win') {
+        if (substr($os, 0, 3) === 'win') {
             // explode the conf into lines to search for the mac
             $lines = explode(PHP_EOL, $conf);
             // seperate the lines for analysis
@@ -956,6 +1136,7 @@ class PadlLicense
             if ($pos) {
                 // seperate out the mac address
                 $str1 = trim(substr($conf, ($pos+strlen($macDelim))));
+
                 return trim(substr($str1, 0, strpos($str1, "\n")));
             }
         }
@@ -975,7 +1156,7 @@ class PadlLicense
     protected function getServerInfo()
     {
         if (empty($this->serverVars)) {
-            $this->setServerVars($server);
+            $this->setServerVars($_SERVER);
         }
         // get the server specific uris
         $a = array();
@@ -991,10 +1172,10 @@ class PadlLicense
         }
         if (isset($this->serverVars['PATH_TRANSLATED'])) {
             $a['PATH_TRANSLATED'] = substr($this->serverVars['PATH_TRANSLATED'], 0, strrpos($this->serverVars['PATH_TRANSLATED'], '/'));
-        } else if (isset($this->serverVars['SCRIPT_FILENAME'])) {
+        } elseif (isset($this->serverVars['SCRIPT_FILENAME'])) {
             $a['SCRIPT_FILENAME'] =  substr($this->serverVars['SCRIPT_FILENAME'], 0, strrpos($this->serverVars['SCRIPT_FILENAME'], '/'));
         }
-        if (isset($server['SCRIPT_URI'])) {
+        if (isset($this->serverVars['SCRIPT_URI'])) {
             $a['SCRIPT_URI'] =  substr($this->serverVars['SCRIPT_URI'], 0, strrpos($this->serverVars['SCRIPT_URI'], '/'));
         }
 
@@ -1017,198 +1198,15 @@ class PadlLicense
      * @param string $dialhost Host name of the server to be contacted
      * @param string $dialpath Path of the script for the data to be sent to
      * @param number $dialport Port Number to send the data through
-     * 
+     *
      * @return string Returns: the encrypted server validation result from the dial home call
      *                       : SOCKET_FAILED    => socket failed to connect to the server
      **/
     protected function callHome($data, $dialhost, $dialpath, $dialport)
     {
         // post the data home
-        $data = $this->post_data($dialhost, $dialpath, $data, $dialport);
+        $data = $this->postData($dialhost, $dialpath, $data, $dialport);
+
         return (empty($data['RESULT'])) ? 'SOCKET_FAILED' : $data['RESULT'];
     }
-
-
-    /**
-     * writeKey
-     *
-     * writes the key
-     *
-     * @param string $key      The key string
-     * @param type   $filePath The path of the file
-     * 
-     * @return boolean Returns boolean on success
-     **/
-    public function writeKey($key, $filePath)
-    {
-        // open the key file for writeing and truncate
-        $h = fopen($filePath, 'w');
-        // if write fails return error
-        if (fwrite($h, $key) === false) {
-            return false;
-        }
-        // close file
-        fclose($h);
-        // return key
-        return true;
-    }
-
-    /**
-     * registerInstall
-     *
-     * registers the install with the home server and if registration is
-     * excepted it then generates and installs the key.
-     *
-     * @param string $domain   The domain to register the license to
-     * @param number $start    The start time of the license, can be either
-     *                         the actuall time or the time span until the license is valid
-     * @param number $expireIn Number of seconds untill the license
-     *                         expires after start, or 'NEVER' to never expire
-     * @param array  $data     Array that contains the info to be validated
-     * @param string $dialhost Host name of the server to be contacted
-     * @param string $dialpath Path of the script for the data to be sent to
-     * @param number $dialport Port Number to send the data through
-     * 
-     * @return string Returns the encrypted install validation
-     **/
-    public function registerInstall($domain, $start, $expireIn, $data, $dialhost, $dialpath, $dialport='80')
-    {
-        // check to see if the class has been secured
-        $this->check_secure();
-        // check if key is alread generated
-
-        // TODO
-        if (@filesize($this->licensePath) > 4) {
-            return array('RESULT'=>'KEY_EXISTS');
-        }
-
-        $data = array('DATA'=>$data);
-
-        // if the server matching is required then get the info
-        if ($this->useServer) {
-            // evaluate the supplied domain against the collected ips
-            if (!$this->compareDomainIp($domain, $this->ips)) {
-                return array('RESULT'=>'DOMAIN_IP_FAIL');
-            }
-            // check server uris
-            if (count($this->serverInfo) < $this->requiredUris) {
-                return array('RESULT'=>'SERVER_FAIL');
-            }
-
-            $data['SERVER']['MAC']    = $this->mac;
-            $data['SERVER']['PATH']   = $this->serverInfo;
-            $data['SERVER']['IP']     = $this->ips;
-            $data['SERVER']['DOMAIN'] = $domain;
-        }
-
-        // if use time restrictions
-        if ($this->useTime) {
-            $current = time();
-            $start   = ($current < $start) ? $start : $current+$start;
-            // set the dates
-            $data['DATE']['START'] = $start;
-            if ($expireIn == 'NEVER') {
-                $data['DATE']['SPAN']   = '~';
-                $data['DATE']['END']   = 'NEVER';
-            } else {
-                $data['DATE']['SPAN']   = $expireIn;
-                $data['DATE']['END']   = $start+$expireIn;
-            }
-        }
-
-        // includethe id for requests
-        $data['ID'] = md5($this->id2);
-
-        // post the data home
-        $data = $this->post_data($dialhost, $dialpath, $data, $dialport);
-        // return the result and key if approved
-        return (empty($data['RESULT'])) ? array('RESULT'=>'SOCKET_FAILED') : $data;
-    }
-
-    /**
-     * generate
-     *
-     * generates the server key when the license class resides on the server
-     *
-     * @param string $domain     The domain to bind the license to.
-     * @param number $start      The number of seconds untill the key is valid
-     *                           if the value is 0 then the current value given by time() is
-     *                           used as the start date.
-     * @param number $expireIn   The number of seconds the key will be valid
-     *                           for (the default reverts to 31449600 - 1 year)
-     * @param array  $otherArray An array that can contain any other data you
-     *                           want to store in the key
-     * 
-     * @return string Key string
-     * @return string KEY_EXISTS     - key has already been written and thus can't write
-     *                DOMAIN_IP_FAIL - means the domain name supplied doesn't match the corresponding ip
-     *                SERVER_FAIL    - enough server vars failed to be found
-     **/
-    public function generate($domain='', $start=0, $expireIn=31449600, $otherArray=array())
-    {
-
-        // if the URIS returned are false it means that there has not been
-        // enough unique data returned by the $server so cannot generate key
-        if ($this->serverInfo !== false || !$this->useServer) {
-            // set the id
-            $data['ID']         = md5($this->id1);
-
-            // set server binds
-            if ($this->useServer) {
-                // evaluate the supplied domain against the collected ips
-                if (!$this->compareDomainIp($domain, $this->ips)) {
-                    return 'DOMAIN_IP_FAIL';
-                }
-
-                // set the domain
-                $data['SERVER']['DOMAIN'] = $domain;
-                // set the mac id
-                $data['SERVER']['MAC']    = $this->mac;
-                // set the server arrays
-                $data['SERVER']['PATH']   = $this->serverInfo;
-                // set the ip arrays
-                $data['SERVER']['IP']     = $this->ips;
-            }
-
-            // set time binds
-            if ($this->useTime && !is_array($start)) {
-                $current = time();
-                $start   = ($current < $start) ? $start : $current+$start;
-                // set the dates
-                $data['DATE']['START'] = $start;
-                $data['DATE']['SPAN']  = $expireIn;
-                if ($expireIn == 'NEVER') {
-                    $data['DATE']['END']   = 'NEVER';
-                } else {
-                    $data['DATE']['END']   = $start+$expireIn;
-                }
-            }
-
-            // if start is array then it is the other array and time binding is not in use
-            // convert to other array
-            if (is_array($start)) {
-                $otherArray = $start;
-            }
-
-            // set the server os
-            $otherArray['_PHP_OS'] = PHP_OS;
-
-            // set the server os
-            $otherArray['_PHP_VERSION'] = PHP_VERSION;
-
-            // merge the data with the other array
-            $data['DATA'] = $otherArray;
-
-            // encrypt the key
-            $key = $this->wrapLicense($data);
-
-
-            // return the key
-            return $key;
-        }
-        // no key can be generated so returns false
-        return 'SERVER_FAIL';
-
-    }
-
 }
