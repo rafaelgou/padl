@@ -18,8 +18,8 @@
               <div class="span5 columns">
                 <h6>Supports PHP 5.3 and above </h6>
                 <p>
-                    For PHP 5.2 please refer to version
-                    [1.0.3](https://github.com/rafaelgou/padl/tree/v1.0.2)!
+                    For PHP 5.2 please refer to 
+                    <a href="https://github.com/rafaelgou/padl/tree/v1.0.2" class="btn primary">version 1.0.2</a>.
                 </p>
               </div>
               <div class="span5 columns">
