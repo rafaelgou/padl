@@ -8,7 +8,7 @@ an expire date.
 ## Demo and API
 
 *   [PADL Demo](http://padl.rgou.net)
-*   [PADL API][docs/README.md]
+*   [PADL API](docs/README.md)
 
 
 ## History
