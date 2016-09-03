@@ -977,7 +977,7 @@ class License
     protected function getServerInfo()
     {
         if (empty($this->serverVars)) {
-            $this->setServerVars($server);
+            $this->setServerVars($_SERVER);
         }
         // get the server specific uris
         $a = array();
