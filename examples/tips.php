@@ -52,7 +52,7 @@
 $server_array = $_SERVER;
 
 // Instance
-$padl = new Padl\License(true, true, false, true);
+$padl = new \Padl\License(true, true, false, true);
 
 // Injecting Server Vars
 $padl->set_server_vars($server_array);

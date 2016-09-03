@@ -48,7 +48,7 @@ parameters:
 - useServer
 - allowLocal
 */
-$padl = new Padl\License(true, true, true, true);
+$padl = new \Padl\License(true, true, true, true);
 
 //For better security injecting a copy of $_SERVER global var
 $server_array = $_SERVER;
