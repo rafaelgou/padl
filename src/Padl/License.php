@@ -514,9 +514,10 @@ class License
                     }
 
                     // check if local
-                    $local = $this->allowLocal && (in_array('127.0.0.1', $data['SERVER']['IP']) || $data['PATH']['SERVER_ADDR'] === '127.0.0.1' || $data['PATH']['HTTP_HOST'] === '127.0.0.1');
-                    if (!$local) {
-                        $data['RESULT'] = 'ILLEGAL_LOCAL';
+                    if(in_array('127.0.0.1', $data['SERVER']['IP']) || $data['PATH']['SERVER_ADDR'] === '127.0.0.1' || $data['PATH']['HTTP_HOST'] === '127.0.0.1'){
+                        if (!$this->allowLocal){
+                            $data['RESULT'] = 'ILLEGAL_LOCAL';
+                        }
                     }
                 }
                 // passed all current test so license is ok
